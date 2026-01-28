@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Queue</title>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+<h1>File d'attente </h1>
+
+<input id="name" placeholder="Name">
+<select id="food">
+  <option>Burger</option>
+  <option>Pizza</option>
+  <option>Salad</option>
+</select>
+<button onclick="addPerson()">Join</button>
+
+<ul id="list"></ul>
+
+<script>
+  const socket = io();
+
+  function addPerson() {
+    let name = document.getElementById("name").value;
+    let food = document.getElementById("food").value;
+    
+    if (name !== "") {
+      socket.emit("join", { name: name, food: food });
+      document.getElementById("name").value = "";
+    }
+  }
+
+  function changePerson(personId, newFood) {
+    socket.emit("updateFood", { id: personId, food: newFood });
+  }
+
+  function removePerson(personId) {
+    socket.emit("leave", personId);
+  }
+
+  socket.on("update", function(queue) {
+    let html = "";
+    
+    for (let i = 0; i < queue.length; i++) {
+      let person = queue[i];
+      let number = i + 1;
+      let name = person.name;
+      let food = person.food;
+      let id = person.id;
+      
+      html += "<li>";
+      html += number + ". " + name + " - " + food;
+      html += " <select onchange='changePerson(" + id + ", this.value)'>";
+      html += "<option " + (food === "Burger" ? "selected" : "") + ">Burger</option>";
+      html += "<option " + (food === "Pizza" ? "selected" : "") + ">Pizza</option>";
+      html += "<option " + (food === "Salad" ? "selected" : "") + ">Salad</option>";
+      html += "</select>";
+      html += " <button onclick='removePerson(" + id + ")'>Leave</button>";
+      html += "</li>";
+    }
+    
+    document.getElementById("list").innerHTML = html;
+  });
+</script>
+
+</body>
+</html>
