@@ -41,3 +41,32 @@ io.on("connection", (socket) => {
 });
 
 server.listen(3000, () => console.log("Server running on port 3000"));
+
+const db = require("./db");
+
+app.post("/commande", (req, res) => {
+  const { nom } = req.body;
+
+  db.query(
+    "INSERT INTO commandes (client_nom, statut) VALUES (?, 'en_attente')",
+    [nom],
+    (err, result) => {
+      if (err) return res.send(err);
+
+      io.emit("update_file");
+
+      res.send("Commande créée");
+    }
+  );
+});
+
+app.put("/commande/:id/valider", (req, res) => {
+  db.query(
+    "UPDATE commandes SET statut='validee' WHERE id=?",
+    [req.params.id],
+    () => {
+      io.emit("update_file");
+      res.send("Commande validée");
+    }
+  );
+});
