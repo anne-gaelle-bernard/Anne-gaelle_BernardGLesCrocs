@@ -1,0 +1,42 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install backend
+        run: npm install
+        working-directory: ./backend
+
+      - name: Install frontend
+        run: npm install
+        working-directory: ./frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: ./frontend
+
+      - name: Google Chat notification
+        if: always()
+        env:
+          GOOGLE_CHAT_WEBHOOK: ${{ secrets.GOOGLE_CHAT_WEBHOOK }}
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            curl -H "Content-Type: application/json" -d '{"text":"✅ GLesCrocs build SUCCESS on main"}' $GOOGLE_CHAT_WEBHOOK
+          else
+            curl -H "Content-Type: application/json" -d '{"text":"❌ GLesCrocs build FAILED on main"}' $GOOGLE_CHAT_WEBHOOK
+          fi
